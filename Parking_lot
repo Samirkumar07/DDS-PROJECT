@@ -1,0 +1,123 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+struct Car {
+    string plate;
+    string owner;
+    Car* next;
+};
+
+class ParkingLot {
+    Car* head;
+    int capacity;
+    int count;
+public:
+    ParkingLot(int cap) {
+        capacity = cap;
+        head = nullptr;
+        count = 0;
+    }
+    ~ParkingLot() {
+        Car* temp = head;
+        while (temp) {
+            Car* next = temp->next;
+            delete temp;
+            temp = next;
+        }
+    }
+    bool isFull() {
+        return count >= capacity;
+    }
+    bool isEmpty() {
+        return count == 0;
+    }
+    void parkCar(const string &plate, const string &owner) {
+        if (isFull()) {
+            cout << "Parking full! Cannot park car: " << plate << "\n";
+            return;
+        }
+        Car* newCar = new Car{plate, owner, nullptr};
+        newCar->next = head;
+        head = newCar;
+        count++;
+        cout << "Car parked successfully. Plate: " << plate << "\n";
+    }
+    void exitCar(const string &plate) {
+        if (isEmpty()) {
+            cout << "Parking is empty!\n";
+            return;
+        }
+        Car* curr = head;
+        Car* prev = nullptr;
+        while (curr) {
+            if (curr->plate == plate) {
+                if (prev) prev->next = curr->next;
+                else head = curr->next;
+                delete curr;
+                count--;
+                cout << "Car exited successfully. Plate: " << plate << "\n";
+                return;
+            }
+            prev = curr;
+            curr = curr->next;
+        }
+        cout << "Car with plate " << plate << " not found.\n";
+    }
+    void display() {
+        if (isEmpty()) {
+            cout << "Parking lot is empty.\n";
+            return;
+        }
+        cout << "\n--- Active Parked Cars ---\n";
+        Car* temp = head;
+        int i = 1;
+        while (temp) {
+            cout << i++ << ". Plate: " << temp->plate 
+                 << ", Owner: " << temp->owner << "\n";
+            temp = temp->next;
+        }
+        cout << "Total parked: " << count << "/" << capacity << "\n";
+    }
+};
+
+int main() {
+    int cap;
+    cout << "Enter parking lot capacity: ";
+    cin >> cap;
+    ParkingLot lot(cap);
+    int choice;
+    string plate, owner;
+    do {
+        cout << "\n--- Smart Parking Menu ---\n"
+             << "1. Park Car\n"
+             << "2. Exit Car\n"
+             << "3. Display Parked Cars\n"
+             << "4. Exit Program\n"
+             << "Enter choice: ";
+        cin >> choice;
+        switch (choice) {
+            case 1:
+                cout << "Enter car plate: ";
+                cin >> plate;
+                cout << "Enter owner name: ";
+                cin >> owner;
+                lot.parkCar(plate, owner);
+                break;
+            case 2:
+                cout << "Enter car plate to exit: ";
+                cin >> plate;
+                lot.exitCar(plate);
+                break;
+            case 3:
+                lot.display();
+                break;
+            case 4:
+                cout << "Exiting program.\n";
+                break;
+            default:
+                cout << "Invalid choice!\n";
+        }
+    } while (choice != 4);
+    return 0;
+}
