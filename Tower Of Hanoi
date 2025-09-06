@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+using namespace std;
+
+struct Peg {
+    char name;
+    vector<int> disks;
+};
+
+void printState(const Peg &A, const Peg &B, const Peg &C, int n, int moveNo = 0, string moveInfo = "") {
+    int width = n * 2 - 1;
+    auto printDisk = [&](int size) {
+        if (size == 0)
+            cout << string((width - 1) / 2, ' ') << "|" << string((width - 1) / 2, ' ');
+        else {
+            int fill = size * 2 - 1;
+            int pad = (width - fill) / 2;
+            cout << string(pad, ' ') << string(fill, '=') << string(pad, ' ');
+        }
+    };
+    cout << "\n";
+    if (moveNo == 0) cout << "Initial State:\n";
+    else cout << "Move " << moveNo << ": " << moveInfo << "\n";
+    cout << string(width * 3 + 8, '-') << "\n";
+    for (int level = n; level >= 1; --level) {
+        for (auto peg : {A, B, C}) {
+            int disk = 0;
+            if ((int)peg.disks.size() >= level)
+                disk = peg.disks[level - 1];
+            printDisk(disk);
+            cout << "   ";
+        }
+        cout << "\n";
+    }
+    cout << string(width * 3 + 8, '-') << "\n";
+    cout << string((width - 1) / 2, ' ') << "A" 
+         << string(width - 1, ' ') << "   "
+         << string((width - 1) / 2, ' ') << "B" 
+         << string(width - 1, ' ') << "   "
+         << string((width - 1) / 2, ' ') << "C" << "\n\n";
+}
+
+void moveDisk(Peg &from, Peg &to) {
+    to.disks.push_back(from.disks.back());
+    from.disks.pop_back();
+}
+
+void hanoi(int n, Peg &src, Peg &aux, Peg &dest,
+           Peg A, Peg B, Peg C,
+           int &moveCount, int totalDisks) {
+    if (n == 0) return;
+    hanoi(n - 1, src, dest, aux, A, B, C, moveCount, totalDisks);
+    moveDisk(src, dest);
+    moveCount++;
+    A = src.name == 'A' ? src : (A.name == 'A' ? A : A);
+    B = src.name == 'B' ? src : (B.name == 'B' ? B : B);
+    C = src.name == 'C' ? src : (C.name == 'C' ? C : C);
+    if (dest.name == 'A') A = dest;
+    if (dest.name == 'B') B = dest;
+    if (dest.name == 'C') C = dest;
+    printState(A, B, C, totalDisks, moveCount,
+               string(1, src.name) + " -> " + string(1, dest.name));
+    this_thread::sleep_for(chrono::milliseconds(200));
+    hanoi(n - 1, aux, src, dest, A, B, C, moveCount, totalDisks);
+}
+
+int main() {
+    int n;
+    cout << "Enter number of disks: ";
+    cin >> n;
+    if (n <= 0) {
+        cout << "Invalid input.\n";
+        return 0;
+    }
+    Peg A{'A'}, B{'B'}, C{'C'};
+    for (int i = n; i >= 1; --i) A.disks.push_back(i);
+    printState(A, B, C, n);
+    int moveCount = 0;
+    hanoi(n, A, B, C, A, B, C, moveCount, n);
+    cout << "\nSolved in " << moveCount 
+         << " moves. (Optimal = " << (1 << n) - 1 << ")\n";
+    return 0;
+}
